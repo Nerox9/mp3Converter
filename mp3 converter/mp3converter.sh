@@ -45,6 +45,31 @@ done
 outputfile=$(dialog --stdout --title "Please Write MP3 Filename" --inputbox "Output File Name:" 10 100 "output")
 output=${outputfile%.*}
 
+# Get the MP3 output quality
+quality=""
+cmd=(dialog --keep-tite --menu "Please Select MP3 Quality:" 10 100 0)
+
+options=(1 "High"
+         2 "Medium"
+         3 "Low")
+
+choices=$("${cmd[@]}" "${options[@]}" 2>&1 >/dev/tty)
+
+for choice in $choices
+do
+    case $choice in
+        1)
+            quality="-q:a 1"
+            ;;
+        2)
+            quality="-q:a 4"
+            ;;
+        3)
+            quality="-q:a 6"
+            ;;
+    esac
+done
+
 # If output file name is empty, clear and exit
 if [ -z $outputfile ]
 then
@@ -55,10 +80,9 @@ fi
 # percentage bar
 ffmpeg -y -loglevel panic -i $inputfile mp3converter.wav | dialog --gauge "Converting..." 10 100 0
 convertWAV=$?
-ffmpeg -y -loglevel panic -i mp3converter.wav $output.mp3 | dialog --gauge "Converting..." 10 100 50
+ffmpeg -y -loglevel panic -i mp3converter.wav -codec:a libmp3lame $quality $output.mp3 | dialog --gauge "Converting..." 10 100 50
 convertMP3=$?
 sleep 1 | dialog --gauge "Converting..." 10 100 100
-
 
 echo "WAV: " $convertWAV
 echo "MP3: " $convertMP3
